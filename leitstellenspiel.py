@@ -673,9 +673,9 @@ def globaling(hidden):
             options.add_argument("headless")
             driver = webdriver.Chrome(options=options)       
         else:
-            options = webdriver.FirefoxOptions()
-            options.add_argument("headless")
-            driver = webdriver.Firefox(options=options)         
+            options = Options()
+            options.headless = True
+            driver = webdriver.Firefox(options=options)    
     else:
          if (browser_used=="chrome"):
             driver=webdriver.Chrome()     
