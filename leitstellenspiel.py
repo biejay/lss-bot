@@ -1,4 +1,9 @@
 #Alles
+
+#Falls ein Fehler mit Selenium auftritt:
+#pip install selenium
+#pip install urllib3
+
 import configparser
 import getpass 
 from selenium import webdriver
@@ -29,8 +34,9 @@ def settings():
     global password
     global browser_used
     config_file='lss_settings.ini'
+    config = configparser.ConfigParser()
     if (path.exists(config_file)):
-        config = configparser.ConfigParser()
+     
         config.read(config_file)
         username   = config['DEFAULT']['username'] 
         password = config['DEFAULT']['password']    
@@ -61,7 +67,8 @@ def settings():
   
 def personal_einstellen(driver):
     page=driver.get("https://www.leitstellenspiel.de/api/buildings")   
-    pre = driver.find_element_by_tag_name("pre").text
+    #pre = driver.find_element_by_tag_name("pre").text
+    pre=driver.find_element_by_id('json').text
     data = json.loads(pre)
     for i in data:
         if(str(i['building_type'])=="7"):
@@ -690,18 +697,23 @@ settings()
 
 
 hidden=input("Browser versteckt starten? (ja/nein) [Standard=nein]: ") 
-getcredits=input("Creditstatistik abrufen? (ja/nein) [Standard=nein]: ") 
-personal=input("Peronal einstellen? (ja/nein) [Standard=nein]: ") 
+
+print("Was willst du tun?")
+print("1 Bot starten")
+print("2 Personal einstellen")
+print("3 Creditstatistik abrufen")
+auswahl=input("1, 2 oder 3:")
 
 
 
-if (personal=="ja"):
+
+if (auswahl=="2"):
     browser=globaling(hidden)        
     login(browser)
     personal_einstellen(browser)
     browser.quit() 
     quit()
-if (getcredits=="ja"):
+if (auswahl=="3"):
     creds_zeitraum=input("Wie viele Tage? [Standard=1]: ")     
     if (creds_zeitraum==""): 
         creds_zeitraum=1
@@ -721,37 +733,35 @@ if (getcredits=="ja"):
     browser.quit() 
     quit()
     
-durchgaenge=input("Wie viele Durchgänge sollen laufen [Standard=1]: ") 
-if durchgaenge == "":
-        durchgaenge=1
-else:
-        durchgaenge=int(durchgaenge)
+if (auswahl=="1"):   
+    durchgaenge=input("Wie viele Durchgänge sollen laufen [Standard=1]: ") 
+    if durchgaenge == "":
+            durchgaenge=1
+    else:
+            durchgaenge=int(durchgaenge)
+    creditgrenze=2500
+    browser=globaling(hidden)
+    try: aufgaben
+    except:  call_aufgaben(browser)       
+    try: vehicles
+    except:  call_cars(browser)
+    #try: driver.get("www.google.de")
+    #except: driver=webdriver.Chrome()    
+    login(browser)    
+    for i in range(0,durchgaenge):
+        print ("Durchgang",i+1,"/",durchgaenge)
+        call_cur_missions(browser)
+        alarmieren(browser)
+        if (i+1<durchgaenge):
+            rand=random.randint(40,80)
+            print("Noch",rand,"Sekunden...")
+            time.sleep(rand)
+            rand=random.randint(40,80)
+            print("Noch",rand,"Sekunden...")
+            time.sleep(rand)
+    print("Ende")    
+    browser.quit()  
 
-creditgrenze=2500
 
-    
-browser=globaling(hidden)
+print(auswahl,"ist keine gültige Möglichkeit. Beende...")
 
-try: aufgaben
-except:  call_aufgaben(browser)       
-try: vehicles
-except:  call_cars(browser)
-#try: driver.get("www.google.de")
-#except: driver=webdriver.Chrome()    
-    
-login(browser)
-
-    
-for i in range(0,durchgaenge):
-    print ("Durchgang",i+1,"/",durchgaenge)
-    call_cur_missions(browser)
-    alarmieren(browser)
-    if (i+1<durchgaenge):
-        rand=random.randint(40,80)
-        print("Noch",rand,"Sekunden...")
-        time.sleep(rand)
-        rand=random.randint(40,80)
-        print("Noch",rand,"Sekunden...")
-        time.sleep(rand)
-print("Ende")    
-#browser.quit()  
