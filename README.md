@@ -15,6 +15,8 @@ https://www.python.org/downloads/release/python-385/
 Open CMD (windows+r):
 pip install selenium
 
+Firefox bzw. Chromedriver zusammen mit leitstellenspiel.py in einen Ordner.
+CMD öffnen, in diesen Ordner wechseln (cd ordner/unterordner)
 python leitstellenspiel.py
 
 Go!
