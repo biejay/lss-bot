@@ -636,7 +636,7 @@ def alarmieren(driver):
            try:
                 credits=int(credits)
            except:
-                print(datetime.now().strftime("%H:%M:%S"),"  ",missions[i],"...Skippe Verbandsmission, unklare Credits (",credits,")")
+                print(missions[i],"...Skippe Verbandsmission, unklare Credits (",credits,")")
                 continue
            if (credits+1>creditgrenze):
                 url="https://www.leitstellenspiel.de/missions/"+mission_id[i]
@@ -644,7 +644,7 @@ def alarmieren(driver):
                 time.sleep(3)
                 source=str(driver.page_source)
                 if ("Rückalarmieren" in source):
-                     print(datetime.now().strftime("%H:%M:%S"),"  ",missions[i],"...Skippe Verbandsmission (",credits,"). Bereits Fahrzeug(e) vor Ort.")
+                     print(missions[i],"...Skippe Verbandsmission (",credits,"). Bereits Fahrzeug(e) vor Ort.")
                 else:
                     if ("Beginn in:" in source):
                         start=source.find("missionCountdown(")            
@@ -652,7 +652,7 @@ def alarmieren(driver):
                         restzeit=source[start+17:start+end]     
                         restzeit=int(restzeit)/60           
                         if (restzeit>15):
-                            print(datetime.now().strftime("%H:%M:%S"),"  ",missions[i],"...Skippe Mission, Beginn erst in",round(restzeit),"Minuten")
+                            print(missions[i],"...Skippe Mission, Beginn erst in",round(restzeit),"Minuten")
                             continue
                     print(datetime.now().strftime("%H:%M:%S"),"  ",missions[i],"(",aufgaben[row][2],")")         
                     print(datetime.now().strftime("%H:%M:%S"),"  ",printtstart,"Schicke 1 LF zur Verbandsmission")   
@@ -671,7 +671,7 @@ def alarmieren(driver):
                     except:
                         alertt(driver)
            else:           
-                print(datetime.now().strftime("%H:%M:%S"),"  ",missions[i],"...Skippe Verbandsmission (",credits,"ist unter Creditgrenze von",str(creditgrenze),")")
+                print(missions[i],"...Skippe Verbandsmission (",credits,"ist unter Creditgrenze von",str(creditgrenze),")")
         
 def globaling(hidden):
     if (hidden=="ja"):
