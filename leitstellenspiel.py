@@ -3,6 +3,8 @@
 #Falls ein Fehler mit Selenium auftritt:
 #pip install selenium
 #pip install urllib3
+#get https://raw.githubusercontent.com/LSS-Manager/lss-manager-v3/master/modules/lss-missionHelper/missions.de_DE.json
+#u'ü' = Sperrm\u00fcllbrand
 
 import configparser
 import getpass 
@@ -28,6 +30,10 @@ aufgaben_file="aufgaben.lss"
 vehicles_file="vehicles.lss"   
   
   
+  
+
+ 
+    
 
 def settings():
     global username
@@ -67,28 +73,30 @@ def settings():
   
 def personal_einstellen(driver):
     page=driver.get("https://www.leitstellenspiel.de/api/buildings")   
-    #pre = driver.find_element_by_tag_name("pre").text
-    pre=driver.find_element_by_id('json').text
+    if (browser_used=="chrome"):
+        pre = driver.find_element_by_tag_name("pre").text
+    if (browser_used=="firefox"):     
+        pre=driver.find_element_by_id('json').text
     data = json.loads(pre)
     for i in data:
         if(str(i['building_type'])=="7"):
-            print("Leitstelle",(30-len(i['caption']))*" "," ( 0 ) : Skippe Leitstelle")           
+            print(datetime.now().strftime("%H:%M:%S"),"  ","Leitstelle",(30-len(i['caption']))*" "," ( 0 ) : Skippe Leitstelle")           
             continue 
         driver.get("https://www.leitstellenspiel.de/buildings/"+str(i['id']))
         inhalt=str(driver.page_source)
         angestellte=inhalt[inhalt.find("Personal:")+43:inhalt.find("Angestellte")-1]
         driver.get("https://www.leitstellenspiel.de/buildings/"+str(i['id'])+'/hire')  
         inhalt=str(driver.page_source)
-        print(i['caption'],(30-len(i['caption']))*" ","(",angestellte,") : ",end="")
+        print(datetime.now().strftime("%H:%M:%S"),"  ",i['caption'],(30-len(i['caption']))*" ","(",angestellte,") : ",end="")
         if ("Die Einstellungsphase läuft noch" in inhalt):
             start=inhalt.find("Die Einstellungsphase läuft noch")
-            print(inhalt[start:start+40])
+            print(datetime.now().strftime("%H:%M:%S"),"  ",inhalt[start:start+40])
             continue
         driver.get("https://www.leitstellenspiel.de//buildings/"+str(i['id'])+"/hire_do/3")
         time.sleep(2)
         temp=driver.find_element_by_xpath("//div[contains(@class, 'alert fade in alert-success ')]")
         temp=temp.text.split("\n")
-        print(temp[1])
+        print(datetime.now().strftime("%H:%M:%S"),"  ",temp[1])
         
 def get_credits(driver,zeitraum):
     if (zeitraum>30):
@@ -99,7 +107,7 @@ def get_credits(driver,zeitraum):
     x=-1
     max_pages=max_pages+1
     for page in range(1,max_pages):
-        print("Seite",page,"/",max_pages-1)
+        print(datetime.now().strftime("%H:%M:%S"),"  ","Seite",page,"/",max_pages-1)
         x=x-1
         url=" https://www.leitstellenspiel.de/credits?page="+str(page)
         driver.get(url)         
@@ -123,10 +131,10 @@ def get_credits(driver,zeitraum):
                     year = time.strftime("%Y")   
                     datetime_str=datetime_str.replace("Uhr",year)
                     datetime_object = datetime.strptime(datetime_str, '%d. %B, %H:%M %Y')
-                    #print(x,credit[x][1],datetime_object.strftime("%d.%m.%Y %H:%M"))
+                    #print(datetime.now().strftime("%H:%M:%S"),"  ",x,credit[x][1],datetime_object.strftime("%d.%m.%Y %H:%M"))
                     if ((datetime.now() - datetime_object).days>zeitraum-1):
                         credit=credit[:x]
-                        print(len(credit),"abgeschlossene Missionen in letzten",zeitraum,"Tagen gefunden!" )
+                        print(datetime.now().strftime("%H:%M:%S"),"  ",len(credit),"abgeschlossene Missionen in letzten",zeitraum,"Tagen gefunden!" )
                         return credit                   
     return "Fehler, konnte nicht alle Missionen der letzten",zeitraum,"Tage abrufen (letztes Datum: "+datetime_str+"). Zeitraum verkleinern!?"
 
@@ -145,10 +153,10 @@ def credit_calc(credit,zeitraum):
         else:
             single_creds=single_creds+int(credit[x][0])           
             single_missions+=1  
-    print("Missionsstatistiken",zeitraum,"Tag(e)")        
-    print("Alle Missionen    (",len(credit),"):",all_creds,"Credits -> Entspricht Ø",round(all_creds/len(credit)),"pro Mission")
-    print("Verbandsmissionen (",verbands_missions,"):",verbands_creds," Credits -> Entspricht Ø",round(verbands_creds/verbands_missions),"pro Mission")
-    print("Single-Missionen  (",single_missions,"):",single_creds," Credits -> Entspricht Ø",round(single_creds/single_missions),"pro Mission")
+    print(datetime.now().strftime("%H:%M:%S"),"  ","Missionsstatistiken",zeitraum,"Tag(e)")        
+    print(datetime.now().strftime("%H:%M:%S"),"  ","Alle Missionen    (",len(credit),"):",all_creds,"Credits -> Entspricht Ø",round(all_creds/len(credit)),"pro Mission")
+    print(datetime.now().strftime("%H:%M:%S"),"  ","Verbandsmissionen (",verbands_missions,"):",verbands_creds," Credits -> Entspricht Ø",round(verbands_creds/verbands_missions),"pro Mission")
+    print(datetime.now().strftime("%H:%M:%S"),"  ","Single-Missionen  (",single_missions,"):",single_creds," Credits -> Entspricht Ø",round(single_creds/single_missions),"pro Mission")
     
 def call_aufgaben(driver): 
     global aufgaben    
@@ -156,14 +164,14 @@ def call_aufgaben(driver):
     if (path.exists(aufgaben_file) and (time.time()-os.path.getmtime(aufgaben_file))/3600 < 72):
         with open (aufgaben_file, 'rb') as fp:
             aufgaben = pickle.load(fp)  
-        print("Datei:",aufgaben_file,"gefunden, lese verfügbare Aufgaben ein...")
-        print(len(aufgaben),"verschiedene Aufgaben gefunden!")      
+        print(datetime.now().strftime("%H:%M:%S"),"  ","Datei:",aufgaben_file,"gefunden, lese verfügbare Aufgaben ein...")
+        print(datetime.now().strftime("%H:%M:%S"),"  ",len(aufgaben),"verschiedene Aufgaben gefunden!")      
     else:   
         try:
             if((time.time()-os.path.getmtime(aufgaben_file))/3600> 72):
-                print("Datei:",aufgaben_file,"seit über 72h nicht mehr geupdatet. Hole aktuelle Daten online...")
+                print(datetime.now().strftime("%H:%M:%S"),"  ","Datei:",aufgaben_file,"seit über 72h nicht mehr geupdatet. Hole aktuelle Daten online...")
         except:
-            print("Datei:",aufgaben_file,"nicht gefunden. Rufe Daten online ab...")
+            print(datetime.now().strftime("%H:%M:%S"),"  ","Datei:",aufgaben_file,"nicht gefunden. Rufe Daten online ab...")
         print ("#1.1 Öffne Wiki und rufe Aufgaben sowie benötigte Fahrzeuge ab...")
         url = 'https://wiki.leitstellenspiel.de/index.php?title=Eins%C3%A4tze_Komplett'     
       #  global driver
@@ -181,7 +189,7 @@ def call_aufgaben(driver):
         aufgaben = [[0 for x in range(w)] for y in range(h)] 
 
         for tables in table:
-          print(round(x/reihen*100),"%")  
+          print(datetime.now().strftime("%H:%M:%S"),"  ",round(x/reihen*100),"%")  
           for row in tables.find_elements_by_xpath(".//tr"):
             x=x+1 
             y=-1
@@ -199,7 +207,7 @@ def call_aufgaben(driver):
                     break  
                td=td.replace("\n","+")   
                aufgaben[x][y]=td       
-        print(reihen,"verschiedene Aufgaben gefunden! --> Speichere in",aufgaben_file) 
+        print(datetime.now().strftime("%H:%M:%S"),"  ",reihen,"verschiedene Aufgaben gefunden! --> Speichere in",aufgaben_file) 
         with open(aufgaben_file, 'wb') as fp:
             pickle.dump(aufgaben, fp)
 def call_cars(driver):
@@ -207,23 +215,23 @@ def call_cars(driver):
      if (path.exists(vehicles_file) and (time.time()-os.path.getmtime(vehicles_file))/3600 < 72):
         with open (vehicles_file, 'rb') as fp:
             vehicles = pickle.load(fp)  
-        print("Datei:",vehicles_file,"gefunden, lese verfügbare Aufgaben ein...")
-        print(len(vehicles),"verschiedene Fahrzeuge gefunden!")      
+        print(datetime.now().strftime("%H:%M:%S"),"  ","Datei:",vehicles_file,"gefunden, lese verfügbare Aufgaben ein...")
+        print(datetime.now().strftime("%H:%M:%S"),"  ",len(vehicles),"verschiedene Fahrzeuge gefunden!")      
      else:   
         try:
             if((time.time()-os.path.getmtime(vehicles_file))/3600> 72):
-                print("Datei:",vehicles_file,"seit über 72h nicht mehr geupdatet. Hole aktuelle Daten online...")
+                print(datetime.now().strftime("%H:%M:%S"),"  ","Datei:",vehicles_file,"seit über 72h nicht mehr geupdatet. Hole aktuelle Daten online...")
         except:
-            print("Datei:",vehicles_file,"nicht gefunden. Rufe Daten online ab...")
-        print("#1.2 Öffne Wiki und rufe Fahrzeugtypen ab ")
+            print(datetime.now().strftime("%H:%M:%S"),"  ","Datei:",vehicles_file,"nicht gefunden. Rufe Daten online ab...")
+        print(datetime.now().strftime("%H:%M:%S"),"  ","#1.2 Öffne Wiki und rufe Fahrzeugtypen ab ")
         #1.2 Öffne Wiki und rufe Fahrzeugtypen ab       
         url = 'https://wiki.leitstellenspiel.de/index.php?title=Fahrzeug_%C3%9Cbersicht'     
         try: 
-            print("try")
+            print(datetime.now().strftime("%H:%M:%S"),"  ","try")
             driver.get(url)
             table = driver.find_elements_by_tag_name('table')
         except: 
-            print("except")
+            print(datetime.now().strftime("%H:%M:%S"),"  ","except")
            # global driver
             if (browser_used=="chrome"):
                 driver=webdriver.Chrome()
@@ -247,13 +255,13 @@ def call_cars(driver):
                td=td.replace(" ","")        
                if (y ==0):        
                   vehicles[x]=td
-          print(round(x/reihen*100),"%...",end="")        
-        print(reihen,"verschiedene Fahrzeuge gefunden! --> Speichere in",vehicles_file) 
+          print(datetime.now().strftime("%H:%M:%S"),"  ",round(x/reihen*100),"%...",end="")        
+        print(datetime.now().strftime("%H:%M:%S"),"  ",reihen,"verschiedene Fahrzeuge gefunden! --> Speichere in",vehicles_file) 
         with open(vehicles_file, 'wb') as fp:
             pickle.dump(vehicles, fp)
 def login(driver):
     #2 Einloggen
-    print("#2 Einloggen")
+    print(datetime.now().strftime("%H:%M:%S"),"  ","#2 Einloggen")
     #options = webdriver.ChromeOptions()
     #options.add_argument("headless")
     #driver = webdriver.Chrome(options=options)
@@ -277,7 +285,7 @@ def login(driver):
     driver.find_element_by_name("commit").click()
 def call_cur_missions(driver):
     #3 Aktuelle Missionen abrufen   
-    print("#3 Aktuelle Missionen abrufen")
+    print(datetime.now().strftime("%H:%M:%S"),"  ","#3 Aktuelle Missionen abrufen")
     global missions
     global mission_id
     global mission_alliance
@@ -286,7 +294,7 @@ def call_cur_missions(driver):
     time.sleep(2)
     inhalt = str(driver.page_source)
     temp=[m.start() for m in re.finditer('missionMarkerAdd', inhalt)]
-    print ("Gefundene Missionen:",str((len(temp))))
+    print (datetime.now().strftime("%H:%M:%S"),"  ","Gefundene Missionen:",str((len(temp))))
     missions=["NONE"]*len(temp)
     mission_id=["NONE"]*len(temp)
     mission_alliance=["NONE"]*len(temp)
@@ -323,7 +331,7 @@ def call_cur_missions(driver):
               end=cur_inhalt.find(".")
               mission_missing[i]= cur_inhalt[start+2:end]
                    
-           #print(i+1,missions[i],"ID:",mission_id[i],"Allianz:",mission_alliance[i],"Missing:",mission_missing[i]) 
+           #print(datetime.now().strftime("%H:%M:%S"),"  ",i+1,missions[i],"ID:",mission_id[i],"Allianz:",mission_alliance[i],"Missing:",mission_missing[i]) 
            row=-1 
            for r in aufgaben:
              row=row+1   
@@ -332,26 +340,26 @@ def call_cur_missions(driver):
            #print ("-->Gefunden:",aufgaben[row][0],"-Dafür benötigt:",aufgaben[row][1])
            #print ("-->Credits:",aufgaben[row][2])
          #  if (mission_alliance[i]==0):
-         #     print(i+1,missions[i],"Credits:",aufgaben[row][2])
+         #     print(datetime.now().strftime("%H:%M:%S"),"  ",i+1,missions[i],"Credits:",aufgaben[row][2])
 def alertt(driver):    
      try:
         WebDriverWait(driver, 3).until(EC.alert_is_present(),
                                        'Timed out waiting for PA creation ' +
                                        'confirmation popup to appear.')
         alert = driver.switch_to.alert    
-        print(printtstart,alert.text)
+        print(datetime.now().strftime("%H:%M:%S"),"  ",printtstart,alert.text)
         alert.accept()
-       # print(printtstart,"Fahrzeug nicht verfügbar")
+       # print(datetime.now().strftime("%H:%M:%S"),"  ",printtstart,"Fahrzeug nicht verfügbar")
      except TimeoutException:
         return    
 def alarmieren(driver):
     global needed
     #5 Fahrzeuge vor Ort / Auf Anfahrt  
-    print("#5 Alarmieren")
-    for i in range(0,len(missions)):  
+    print(datetime.now().strftime("%H:%M:%S"),"  ","#5 Alarmieren")
+    for i in range(0,len(missions)):     
       string=str(i+1)+" / "+str(len(missions))       
       printtstart=(len(string)+1)*" "
-      print(i+1, "/",str(len(missions))," ",end="")
+      print(datetime.now().strftime("%H:%M:%S"),"  ",i+1, "/",str(len(missions))," ",end="")
       additional=0
       if (mission_alliance[i]==0): 
         url="https://www.leitstellenspiel.de/missions/"+mission_id[i]
@@ -406,7 +414,7 @@ def alarmieren(driver):
                 x+=1            
         except:
             vorort=0
-            print(printtstart,"Keine Fahrzeuge vor Ort")         
+            print(datetime.now().strftime("%H:%M:%S"),"  ",printtstart,"Keine Fahrzeuge vor Ort")         
         lf_an=0
         dlk_an=0
         elw_an=0
@@ -428,14 +436,14 @@ def alarmieren(driver):
                     value=cell.text         
                     manpower_an=manpower_an+ int(value)
                 x+=1   
-        #    print("Auf Anfahrt:")    
-        #    print("LF:"+str(lf_an))
-        #    print("DLK:"+str(dlk_an))
-        #    print("ELW:"+str(elw_an))
-        #    print("RW:"+str(rw_an))   
-        #    print("Manpower:"+str(manpower_an))
+        #    print(datetime.now().strftime("%H:%M:%S"),"  ","Auf Anfahrt:")    
+        #    print(datetime.now().strftime("%H:%M:%S"),"  ","LF:"+str(lf_an))
+        #    print(datetime.now().strftime("%H:%M:%S"),"  ","DLK:"+str(dlk_an))
+        #    print(datetime.now().strftime("%H:%M:%S"),"  ","ELW:"+str(elw_an))
+        #    print(datetime.now().strftime("%H:%M:%S"),"  ","RW:"+str(rw_an))   
+        #    print(datetime.now().strftime("%H:%M:%S"),"  ","Manpower:"+str(manpower_an))
         except:
-            print(printtstart,"Keine Fahrzeuge auf Anfahrt")
+            print(datetime.now().strftime("%H:%M:%S"),"  ",printtstart,"Keine Fahrzeuge auf Anfahrt")
             ankommend=0
         if ("Wir benötigen noch min." not in str(driver.page_source) and "Zusätzlich benötigte Fahrzeuge:" not in str(driver.page_source) and "missionCountdown(" in source and vorort==1 or "Wir benötigen noch min." not in str(driver.page_source) and "Zusätzlich benötigte Fahrzeuge:" not in str(driver.page_source) and ankommend==1 and "missionCountdown(" in source):
             start=source.find("missionCountdown(")
@@ -443,7 +451,7 @@ def alarmieren(driver):
             end=source[start:].find(",")
             restzeit=source[start+17:start+end]     
             restzeit=int(restzeit)/60
-            print(printtstart,"...Skippe Mission, alle Fahrzeuge vor Ort. Restzeit:",round(restzeit),"Minute(n)")
+            print(datetime.now().strftime("%H:%M:%S"),"  ",printtstart,"...Skippe Mission, alle Fahrzeuge vor Ort. Restzeit:",round(restzeit),"Minute(n)")
             continue      
         row=-1
         for r in aufgaben:
@@ -461,21 +469,21 @@ def alarmieren(driver):
                  start=source.find("Zusätzlich benötigte Fahrzeuge:")                
                  end=source[start+42:].find(".")  
                  needed=source[start+47:start+42+end]
-                 print(printtstart,"Was mit Wasser und needed:",needed)  
+                 print(datetime.now().strftime("%H:%M:%S"),"  ",printtstart,"Was mit Wasser und needed:",needed)  
                  if (lf_an==0 and ankommend==0):   
-                     print(printtstart,"Schicke 1 LF als Mannschaftsverstärkung")
+                     print(datetime.now().strftime("%H:%M:%S"),"  ",printtstart,"Schicke 1 LF als Mannschaftsverstärkung")
                      driver.find_element_by_xpath('//*[@title="1 LF"]').click()      
                      ankommend=1
                      alertt(driver)
-            #print(needed)   
+            #print(datetime.now().strftime("%H:%M:%S"),"  ",needed)   
             if (ankommend==0):
-              #  print(needed)
+              #  print(datetime.now().strftime("%H:%M:%S"),"  ",needed)
                 if ("(" in needed):
                     temp=needed.split(")")
                     needed=""
                     for j in temp:
                         if ("(" in j):
-                          #  print(j)
+                          #  print(datetime.now().strftime("%H:%M:%S"),"  ",j)
                             end=j.find("(")
                             if (j[len(j)-1:len(j)]==" "):
                                 needed=needed+j[:end]
@@ -483,26 +491,26 @@ def alarmieren(driver):
                                 needed=needed+j[:end-1]
                         else:
                             needed=needed+j
-                   # print(needed)    
+                   # print(datetime.now().strftime("%H:%M:%S"),"  ",needed)    
                 if ("," in needed):
                     needed=needed.split(",")                
                     for auto in needed:
-                      # print(auto)
+                      # print(datetime.now().strftime("%H:%M:%S"),"  ",auto)
                       # print ("Auto:",auto[3:],"-",auto[1:2],"Mal rufen")
                        for h in range(0,int(auto[1:2])):                       
                          call='//*[@title="1 '+auto[3:]+'"]'   
-                        # print("call:",call)
+                        # print(datetime.now().strftime("%H:%M:%S"),"  ","call:",call)
                          driver.find_element_by_xpath(call).click()                       
                          alertt(driver)                
                 else:
                     #print ("Auto:",needed[3:],"-1 Mal rufen")
                     for h in range(0,int(needed[1:2])):                       
                          call='//*[@title="1 '+needed[3:]+'"]'   
-                       #  print("call:",call)
+                       #  print(datetime.now().strftime("%H:%M:%S"),"  ","call:",call)
                          driver.find_element_by_xpath(call).click()                       
                          alertt(driver)
             else:
-                print(printtstart,"Es sind bereits Fahrzeuge auf Anfahrt, warte ab und schicke keine weiteren.")
+                print(datetime.now().strftime("%H:%M:%S"),"  ",printtstart,"Es sind bereits Fahrzeuge auf Anfahrt, warte ab und schicke keine weiteren.")
                 #continue
             #for auto in fahrzeuge_abk:
             #    if (auto in needed):
@@ -513,10 +521,10 @@ def alarmieren(driver):
              #       else:    
              #           needed=needed[3:]
              #       anzahl_needed=int(needed[needed.find(" ")+1:needed.find(" ")+2])     
-             #     #  print("anzahl needed:",anzahl_needed,"auto:",auto,"anzahl ankommend:",fahrzeuge_an[fahrzeuge_abk.index(auto)])  
+             #     #  print(datetime.now().strftime("%H:%M:%S"),"  ","anzahl needed:",anzahl_needed,"auto:",auto,"anzahl ankommend:",fahrzeuge_an[fahrzeuge_abk.index(auto)])  
              #       for x in range (0,anzahl_needed-fahrzeuge_an[fahrzeuge_abk.index(auto)]):                        
              #         call='//*[@title="1 '+fahrzeuge_abk[fahrzeuge_abk.index(auto)+1]+'"]'    
-             #        # print(call)
+             #        # print(datetime.now().strftime("%H:%M:%S"),"  ",call)
              #         driver.find_element_by_xpath(call).click()                       
              #         alertt(driver)                  
         else:            
@@ -533,25 +541,25 @@ def alarmieren(driver):
           #          needed = needed[::-1]
           #          needed=needed[needed.find(auto[::-1]):]
           #          anzahl_needed=int(needed[needed.find(" x")+2:needed.find(" x")+3]) 
-          #          #print("anzahl needed:",anzahl_needed,"auto:",auto,"anzahl ankommend:",fahrzeuge_an[fahrzeuge_abk.index(auto)])  
+          #          #print(datetime.now().strftime("%H:%M:%S"),"  ","anzahl needed:",anzahl_needed,"auto:",auto,"anzahl ankommend:",fahrzeuge_an[fahrzeuge_abk.index(auto)])  
           #          for x in range (0,anzahl_needed):                        
           #            call='//*[@title="1 '+fahrzeuge_abk[fahrzeuge_abk.index(auto)+1]+'"]'                      
           #            driver.find_element_by_xpath(call).click()                       
           #            alertt(driver)
             if ("Wir benötigen noch min." in str(driver.page_source) and lf_an==0 and ankommend==0):
                 additional=1 
-                print(printtstart,"Schicke 1 LF als Mannschaftsverstärkung")               
+                print(datetime.now().strftime("%H:%M:%S"),"  ",printtstart,"Schicke 1 LF als Mannschaftsverstärkung")               
                 driver.find_element_by_xpath('//*[@title="1 LF"]').click()                
                 alertt(driver)  
       
-       # print("")
-       # print("Differenz:")
-       # print("LF benötigt:",str(lf_need-lf_da-lf_an))    
-       # print("DLK benötigt:",str(dlk_need-dlk_da-dlk_an))  
-       # print("RW benötigt:",str(rw_need-rw_da-rw_an))  
-       # print("ELW benötigt:",str(elw_need-elw_da-elw_an))  
+       # print(datetime.now().strftime("%H:%M:%S"),"  ","")
+       # print(datetime.now().strftime("%H:%M:%S"),"  ","Differenz:")
+       # print(datetime.now().strftime("%H:%M:%S"),"  ","LF benötigt:",str(lf_need-lf_da-lf_an))    
+       # print(datetime.now().strftime("%H:%M:%S"),"  ","DLK benötigt:",str(dlk_need-dlk_da-dlk_an))  
+       # print(datetime.now().strftime("%H:%M:%S"),"  ","RW benötigt:",str(rw_need-rw_da-rw_an))  
+       # print(datetime.now().strftime("%H:%M:%S"),"  ","ELW benötigt:",str(elw_need-elw_da-elw_an))  
         if (additional == 0 and vorort==0 and ankommend==0):              
-             print(printtstart,"Schicke 1 LF als Vorhut")               
+             print(datetime.now().strftime("%H:%M:%S"),"  ",printtstart,"Schicke 1 LF als Vorhut")               
              driver.find_element_by_xpath('//*[@title="1 LF"]').click()                
              alertt(driver)  
         if (additional == 18236123):
@@ -591,7 +599,7 @@ def alarmieren(driver):
             time.sleep(2)
             temp=driver.find_element_by_xpath("//div[contains(@class, 'alert fade in alert-success ')]")
             temp=temp.text.split("\n")
-            print(printtstart,temp[1])
+            print(datetime.now().strftime("%H:%M:%S"),"  ",printtstart,temp[1])
             time.sleep(random.randint(2, 8))
         except:
             alertt(driver)
@@ -605,7 +613,7 @@ def alarmieren(driver):
            print(missions[i],"...Skippe Verbandsmission, unbekannte Aufgabe")   
         else:   
            credits=aufgaben[row][2]
-           #print("credits:",credits)
+           #print(datetime.now().strftime("%H:%M:%S"),"  ","credits:",credits)
            try: 
                 credits=credits.replace(".","")
            except:
@@ -624,11 +632,11 @@ def alarmieren(driver):
            if ("-" in credits):
                 start=credits.find("-")
                 credits=credits[start+2:]  
-           #print("neue credits:",credits)       
+           #print(datetime.now().strftime("%H:%M:%S"),"  ","neue credits:",credits)       
            try:
                 credits=int(credits)
            except:
-                print(missions[i],"...Skippe Verbandsmission, unklare Credits (",credits,")")
+                print(datetime.now().strftime("%H:%M:%S"),"  ",missions[i],"...Skippe Verbandsmission, unklare Credits (",credits,")")
                 continue
            if (credits+1>creditgrenze):
                 url="https://www.leitstellenspiel.de/missions/"+mission_id[i]
@@ -636,7 +644,7 @@ def alarmieren(driver):
                 time.sleep(3)
                 source=str(driver.page_source)
                 if ("Rückalarmieren" in source):
-                     print(missions[i],"...Skippe Verbandsmission (",credits,"). Bereits Fahrzeug(e) vor Ort.")
+                     print(datetime.now().strftime("%H:%M:%S"),"  ",missions[i],"...Skippe Verbandsmission (",credits,"). Bereits Fahrzeug(e) vor Ort.")
                 else:
                     if ("Beginn in:" in source):
                         start=source.find("missionCountdown(")            
@@ -644,10 +652,10 @@ def alarmieren(driver):
                         restzeit=source[start+17:start+end]     
                         restzeit=int(restzeit)/60           
                         if (restzeit>15):
-                            print(missions[i],"...Skippe Mission, Beginn erst in",round(restzeit),"Minuten")
+                            print(datetime.now().strftime("%H:%M:%S"),"  ",missions[i],"...Skippe Mission, Beginn erst in",round(restzeit),"Minuten")
                             continue
-                    print(missions[i],"(",aufgaben[row][2],")")         
-                    print(printtstart,"Schicke 1 LF zur Verbandsmission")   
+                    print(datetime.now().strftime("%H:%M:%S"),"  ",missions[i],"(",aufgaben[row][2],")")         
+                    print(datetime.now().strftime("%H:%M:%S"),"  ",printtstart,"Schicke 1 LF zur Verbandsmission")   
                     try:        
                         driver.find_element_by_xpath('//*[@title="1 LF"]').click()                
                         alertt(driver)         
@@ -658,22 +666,24 @@ def alarmieren(driver):
                         time.sleep(2)
                         temp=driver.find_element_by_xpath("//div[contains(@class, 'alert fade in alert-success ')]")
                         temp=temp.text.split("\n")
-                        print(printtstart,temp[1])
+                        print(datetime.now().strftime("%H:%M:%S"),"  ",printtstart,temp[1])
                         time.sleep(random.randint(2, 8))
                     except:
                         alertt(driver)
            else:           
-                print(missions[i],"...Skippe Verbandsmission (",credits,"ist unter Creditgrenze von",str(creditgrenze),")")
+                print(datetime.now().strftime("%H:%M:%S"),"  ",missions[i],"...Skippe Verbandsmission (",credits,"ist unter Creditgrenze von",str(creditgrenze),")")
         
 def globaling(hidden):
     if (hidden=="ja"):
-        print("Starte versteckt")
+        print(datetime.now().strftime("%H:%M:%S"),"  ","Starte versteckt")
         if (browser_used=="chrome"):
             options = webdriver.ChromeOptions()
             options.add_argument("headless")
+            options.add_argument("disable-gpu")
             driver = webdriver.Chrome(options=options)       
         else:
             options = Options()
+            options.add_argument("disable-gpu")
             options.headless = True
             driver = webdriver.Firefox(options=options)    
     else:
@@ -727,7 +737,7 @@ if (auswahl=="3"):
     login(browser)
     credit=get_credits(browser,creds_zeitraum)
     if ("Fehler" in credit):
-        print(credit)
+        print(datetime.now().strftime("%H:%M:%S"),"  ",credit)
     else:
        credit_calc(credit,creds_zeitraum)  
     browser.quit() 
@@ -749,19 +759,20 @@ if (auswahl=="1"):
     #except: driver=webdriver.Chrome()    
     login(browser)    
     for i in range(0,durchgaenge):
-        print ("Durchgang",i+1,"/",durchgaenge)
+        print (datetime.now().strftime("%H:%M:%S"),"  ","Durchgang",i+1,"/",durchgaenge)
         call_cur_missions(browser)
         alarmieren(browser)
         if (i+1<durchgaenge):
             rand=random.randint(40,80)
-            print("Noch",rand,"Sekunden...")
+            print(datetime.now().strftime("%H:%M:%S"),"  ","Noch",rand,"Sekunden...")
             time.sleep(rand)
             rand=random.randint(40,80)
-            print("Noch",rand,"Sekunden...")
+            print(datetime.now().strftime("%H:%M:%S"),"  ","Noch",rand,"Sekunden...")
             time.sleep(rand)
-    print("Ende")    
-    browser.quit()  
+    print(datetime.now().strftime("%H:%M:%S"),"  ","Ende")    
+    browser.quit() 
+    quit()
 
 
-print(auswahl,"ist keine gültige Möglichkeit. Beende...")
+print(datetime.now().strftime("%H:%M:%S"),"  ",auswahl,"ist keine gültige Möglichkeit. Beende...")
 
