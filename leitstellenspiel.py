@@ -654,7 +654,7 @@ def alarmieren(driver):
                         if (restzeit>15):
                             print(missions[i],"...Skippe Mission, Beginn erst in",round(restzeit),"Minuten")
                             continue
-                    print(datetime.now().strftime("%H:%M:%S"),"  ",missions[i],"(",aufgaben[row][2],")")         
+                    print(missions[i],"(",aufgaben[row][2],")")         
                     print(datetime.now().strftime("%H:%M:%S"),"  ",printtstart,"Schicke 1 LF zur Verbandsmission")   
                     try:        
                         driver.find_element_by_xpath('//*[@title="1 LF"]').click()                
