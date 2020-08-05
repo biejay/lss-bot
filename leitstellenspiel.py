@@ -339,7 +339,16 @@ def alertt(driver):
        # print(datetime.now().strftime("%H:%M:%S"),"  ",printtstart,"Fahrzeug nicht verfügbar")
      except TimeoutException:
         return    
-def alarmieren(driver):
+def alarmieren(driver,speedmode):
+    #global time_min
+    #global time_max
+    if (speedmode=="ja"):
+        print(datetime.now().strftime("%H:%M:%S"),"  ","Speedmode aktiv")
+        time_min=0
+        time_max=1
+    else:
+        time_min=4
+        time_max=8
     global needed
     #5 Fahrzeuge vor Ort / Auf Anfahrt  
     print(datetime.now().strftime("%H:%M:%S"),"  ","#5 Alarmieren")
@@ -351,7 +360,7 @@ def alarmieren(driver):
       if (mission_alliance[i]==0): 
         url="https://www.leitstellenspiel.de/missions/"+mission_id[i]
         driver.get(url)
-        time.sleep(3)
+        time.sleep(2)
         source=str(driver.page_source)
         if ("Der Einsatz wurde erfolgreich abgeschlossen." in str(driver.page_source)):
             print(missions[i],"...Skippe abgeschlossenen Einsatz",)
@@ -583,11 +592,11 @@ def alarmieren(driver):
             #     print (lf_need-lf_da-lf_an,"LF,", elw_need-elw_da-elw_an,"ELW,",dlk_need-dlk_da-dlk_an,"DLK,",rw_need-rw_da-rw_an,"RW zu Mission",missions[i],"geschickt!")
             #if (additional == 1):
             #     print ("Benötigte Verstärkung geschickt:", lf_need,"LF,", elw_need,"ELW,",dlk_need,"DLK,",rw_need,"RW zu Mission",missions[i],"geschickt!")
-            time.sleep(2)
+            time.sleep(1)
             temp=driver.find_element_by_xpath("//div[contains(@class, 'alert fade in alert-success ')]")
             temp=temp.text.split("\n")
             print(datetime.now().strftime("%H:%M:%S"),"  ",printtstart,temp[1])
-            time.sleep(random.randint(2, 8))
+            time.sleep(random.randint(time_min,time_max))
         except:
             alertt(driver)
       else:
@@ -628,7 +637,7 @@ def alarmieren(driver):
            if (credits+1>creditgrenze):
                 url="https://www.leitstellenspiel.de/missions/"+mission_id[i]
                 driver.get(url)
-                time.sleep(3)
+                time.sleep(2)
                 source=str(driver.page_source)
                 if ("Rückalarmieren" in source):
                      print(missions[i],"...Skippe Verbandsmission ( Ø",aufgaben[row][1],"Credits ). Bereits Fahrzeug(e) vor Ort.")
@@ -650,18 +659,23 @@ def alarmieren(driver):
                         alertt(driver)
                         driver.execute_script("arguments[0].click();", element)       
                         alertt(driver)
-                        time.sleep(2)
+                        time.sleep(1)
                         temp=driver.find_element_by_xpath("//div[contains(@class, 'alert fade in alert-success ')]")
                         temp=temp.text.split("\n")
                         print(datetime.now().strftime("%H:%M:%S"),"  ",printtstart,temp[1])
-                        time.sleep(random.randint(2, 8))
+                        time.sleep(random.randint(time_min,time_max))
                     except:
                         alertt(driver)
            else:           
-                print(missions[i],"...Skippe Verbandsmission, Ø",aufgaben[row][1],"Credits ist unter Creditgrenze von",str(creditgrenze),")")
+                print(missions[i],"...Skippe Verbandsmission (Ø",aufgaben[row][1],"Credits ist unter Creditgrenze von",str(creditgrenze),")")
         
 def globaling(hidden):
-    if (hidden=="ja"):
+    if (hidden=="nein"):
+        if (browser_used=="chrome"):
+            driver=webdriver.Chrome()     
+        else:
+           driver=webdriver.Firefox()  
+    else:
         print(datetime.now().strftime("%H:%M:%S"),"  ","Starte versteckt")
         if (browser_used=="chrome"):
             options = webdriver.ChromeOptions()
@@ -672,12 +686,8 @@ def globaling(hidden):
             options = Options()
             options.add_argument("disable-gpu")
             options.headless = True
-            driver = webdriver.Firefox(options=options)    
-    else:
-         if (browser_used=="chrome"):
-            driver=webdriver.Chrome()     
-         else:
-           driver=webdriver.Firefox()  
+            driver = webdriver.Firefox(options=options)     
+         
     return driver
 def get_status(driverc):
     try:
@@ -693,7 +703,8 @@ printtstart="       "
 settings()
 
 
-hidden=input("Browser versteckt starten? (ja/nein) [Standard=nein]: ") 
+hidden=input("Browser versteckt starten? (ja/nein) [Standard=ja]: ") 
+speedmode=input("Speedmode? (nicht empfohlen!) (ja/nein) [Standard=nein]: ") 
 
 print("Was willst du tun?")
 print("1 Bot starten")
@@ -737,12 +748,12 @@ if (auswahl=="3"):
     quit()
     
 if (auswahl=="1"):   
-    durchgaenge=input("Wie viele Durchgänge sollen laufen [Standard=1]: ") 
+    durchgaenge=input("Wie viele Durchgänge sollen laufen [Standard=30]: ") 
     if durchgaenge == "":
-            durchgaenge=1
+            durchgaenge=30
     else:
             durchgaenge=int(durchgaenge)
-    creditgrenze=2500
+    creditgrenze=3000
     browser=globaling(hidden)
     try: aufgaben
     except:  call_aufgaben(browser)       
@@ -754,7 +765,7 @@ if (auswahl=="1"):
     for i in range(0,durchgaenge):
         print (datetime.now().strftime("%H:%M:%S"),"  ","Durchgang",i+1,"/",durchgaenge)
         call_cur_missions(browser)
-        alarmieren(browser)
+        alarmieren(browser,speedmode)
         if (i+1<durchgaenge):
             rand=random.randint(40,80)
             print(datetime.now().strftime("%H:%M:%S"),"  ","Noch",rand,"Sekunden...")
