@@ -191,12 +191,16 @@ def call_aufgaben(driver):
         data = json.loads(pre)
         x=0
         reihen=len(data)
-        w, h = 3, reihen  #6 Items in x 'reihen' Reihen       
+        w, h = 4, reihen  #6 Items in x 'reihen' Reihen       
         aufgaben = [[0 for x in range(w)] for y in range(h)] 
         for i in data: 
             aufgaben[x][0]=data[str(i)]['name']
             aufgaben[x][1]=data[str(i)]['average_credits']
             aufgaben[x][2]=data[str(i)]['requirements']
+            try: 
+               aufgaben[x][3]=data[str(i)]['additional']['duration']
+            except:
+               aufgaben[x][3]="unbekannt"   
             x+=1
         print(datetime.now().strftime("%H:%M:%S"),"  ",reihen,"verschiedene Aufgaben gefunden! --> Speichere in",aufgaben_file) 
         with open(aufgaben_file, 'wb') as fp:
@@ -340,8 +344,6 @@ def alertt(driver):
      except TimeoutException:
         return    
 def alarmieren(driver,speedmode):
-    #global time_min
-    #global time_max
     if (speedmode=="ja"):
         print(datetime.now().strftime("%H:%M:%S"),"  ","Speedmode aktiv")
         time_min=0
@@ -361,6 +363,11 @@ def alarmieren(driver,speedmode):
         url="https://www.leitstellenspiel.de/missions/"+mission_id[i]
         driver.get(url)
         time.sleep(2)
+        row=-1
+        for r in aufgaben:
+                 row=row+1   
+                 if (str(r[0]) in missions[i]):
+                     break      
         source=str(driver.page_source)
         if ("Der Einsatz wurde erfolgreich abgeschlossen." in str(driver.page_source)):
             print(missions[i],"...Skippe abgeschlossenen Einsatz",)
@@ -371,22 +378,18 @@ def alarmieren(driver,speedmode):
             restzeit=source[start+17:start+end]     
             restzeit=int(restzeit)/60           
             if (restzeit>15):
-                print(missions[i],"...Skippe Mission, Beginn erst in",round(restzeit),"Minuten")
+                print(missions[i],"( Dauer:",aufgaben[row][3],")...Skippe Mission, Beginn erst in",round(restzeit),"Minuten")
                 continue
         lf_da=0
         dlk_da=0
         elw_da=0
         rw_da=0
         manpower_da=0
-        row=-1
-        for r in aufgaben:
-                 row=row+1   
-                 if (str(r[0]) in missions[i]):
-                     break                 
+                   
         if (row+1==len(aufgaben)):
            print(missions[i],"- Credits: unbekannt")
-        else:         
-           print(missions[i],"( Ø",aufgaben[row][1],"Credits )")
+        else:  
+           print(missions[i],"( Dauer:",aufgaben[row][3],", Ø",aufgaben[row][1],"Credits )")    
         try:
             vorort=1
             find= driver.find_element_by_id('mission_vehicle_at_mission')         
@@ -606,7 +609,7 @@ def alarmieren(driver,speedmode):
                  if (str(r[0]) in missions[i]):
                      break                          
         if (row+1==len(aufgaben)):
-           print(missions[i],"...Skippe Verbandsmission, unbekannte Aufgabe")   
+           print(missions[i],"( Dauer:",aufgaben[row][3],")...Skippe Verbandsmission, unbekannte Aufgabe")   
         else:   
            credits=aufgaben[row][1]
            #print(datetime.now().strftime("%H:%M:%S"),"  ","credits:",credits)
@@ -632,7 +635,7 @@ def alarmieren(driver,speedmode):
            try:
                 credits=int(credits)
            except:
-                print(missions[i],"...Skippe Verbandsmission, unklare Credits (",credits,")")
+                print(missions[i],"( Dauer:",aufgaben[row][3],")...Skippe Verbandsmission, unklare Credits (",credits,")")
                 continue
            if (credits+1>creditgrenze):
                 url="https://www.leitstellenspiel.de/missions/"+mission_id[i]
@@ -640,7 +643,7 @@ def alarmieren(driver,speedmode):
                 time.sleep(2)
                 source=str(driver.page_source)
                 if ("Rückalarmieren" in source):
-                     print(missions[i],"...Skippe Verbandsmission ( Ø",aufgaben[row][1],"Credits ). Bereits Fahrzeug(e) vor Ort.")
+                     print(missions[i],"( Dauer:",aufgaben[row][3],")...Skippe Verbandsmission ( Ø",aufgaben[row][1],"Credits ). Bereits Fahrzeug(e) vor Ort.")
                 else:
                     if ("Beginn in:" in source):
                         start=source.find("missionCountdown(")            
@@ -667,7 +670,7 @@ def alarmieren(driver,speedmode):
                     except:
                         alertt(driver)
            else:           
-                print(missions[i],"...Skippe Verbandsmission (Ø",aufgaben[row][1],"Credits ist unter Creditgrenze von",str(creditgrenze),")")
+                print(missions[i],"( Dauer:",aufgaben[row][3],")...Skippe Verbandsmission (Ø",aufgaben[row][1],"Credits ist unter Creditgrenze von",str(creditgrenze),")")
         
 def globaling(hidden):
     if (hidden=="nein"):
