@@ -6,6 +6,12 @@
 #get https://raw.githubusercontent.com/LSS-Manager/lss-manager-v3/master/modules/lss-missionHelper/missions.de_DE.json
 #u'ü' = Sperrm\u00fcllbrand
 
+
+
+#Mac:
+#brew cask install chromedriver
+#install selenium via browser, unpack, install
+
 import configparser
 import getpass 
 from selenium import webdriver
@@ -110,7 +116,10 @@ def get_credits(driver,zeitraum):
         print(datetime.now().strftime("%H:%M:%S"),"  ","Seite",page,"/",max_pages-1)
         x=x-1
         url=" https://www.leitstellenspiel.de/credits?page="+str(page)
-        driver.get(url)         
+        driver.get(url)     
+        inhalt = str(driver.page_source)
+        if ("Bisher besteht noch kein Eintrag." in inhalt):
+        	return "Fehler, zu wenig Einträge vorhanden! Zeitraum (aktuell: ",zeitraum,"Tage) verkleinern?"   
         table = driver.find_elements_by_tag_name('table')          
         for tables in table:         
           for row in tables.find_elements_by_xpath(".//tr"):
@@ -160,12 +169,12 @@ def credit_calc(credit,zeitraum):
     
 def call_aufgaben(driver): 
     global aufgaben    
-    #1.1 Öffne Wiki und rufe Aufgaben sowie benötigte Fahrzeuge ab
+    #1.1 Öffne Github und rufe Aufgaben sowie benötigte Fahrzeuge ab
     if (path.exists(aufgaben_file) and (time.time()-os.path.getmtime(aufgaben_file))/3600 < 72):
         with open (aufgaben_file, 'rb') as fp:
             aufgaben = pickle.load(fp)  
         print(datetime.now().strftime("%H:%M:%S"),"  ","Datei:",aufgaben_file,"gefunden, lese verfügbare Aufgaben ein...")
-        print(datetime.now().strftime("%H:%M:%S"),"  ",len(aufgaben),"verschiedene Aufgaben gefunden!")      
+        print(datetime.now().strftime("%H:%M:%S"),"  ",len(aufgaben),"verschiedene Aufgaben gefunden!")    
     else:   
         try:
             if((time.time()-os.path.getmtime(aufgaben_file))/3600> 72):
@@ -173,40 +182,22 @@ def call_aufgaben(driver):
         except:
             print(datetime.now().strftime("%H:%M:%S"),"  ","Datei:",aufgaben_file,"nicht gefunden. Rufe Daten online ab...")
         print ("#1.1 Öffne Wiki und rufe Aufgaben sowie benötigte Fahrzeuge ab...")
-        url = 'https://wiki.leitstellenspiel.de/index.php?title=Eins%C3%A4tze_Komplett'     
-      #  global driver
-        if (browser_used=="chrome"):
-            driver=webdriver.Chrome()
-        else:
-            driver=webdriver.Firefox()
+        url="https://raw.githubusercontent.com/LSS-Manager/lss-manager-v3/master/modules/lss-missionHelper/missions.de_DE.json"
         driver.get(url)
-        table = driver.find_elements_by_tag_name('table')
-        x=-2
-        reihen=0
-        for tables in table: 
-           reihen=reihen+len(tables.find_elements_by_xpath(".//tr"))
-        w, h = 6, reihen  #6 Items in x 'reihen' Reihen       
+        if (browser_used=="chrome"):
+            pre = driver.find_element_by_tag_name("pre").text
+        if (browser_used=="firefox"):     
+                pre=driver.find_element_by_id('json').text
+        data = json.loads(pre)
+        x=0
+        reihen=len(data)
+        w, h = 3, reihen  #6 Items in x 'reihen' Reihen       
         aufgaben = [[0 for x in range(w)] for y in range(h)] 
-
-        for tables in table:
-          print(datetime.now().strftime("%H:%M:%S"),"  ",round(x/reihen*100),"%")  
-          for row in tables.find_elements_by_xpath(".//tr"):
-            x=x+1 
-            y=-1
-            for td in row.find_elements_by_xpath(".//td"):
-               y=y+1
-               td=td.text                
-               for z in range(0,15): 
-                  occure=td.find("(")             
-                  if (occure>-1):
-                    if (td.find(")"))>-1:
-                      td=td[0:occure-1]+td[td.find(")")+1:]  
-                    else:
-                      td=td[0:occure-1]
-                  else:
-                    break  
-               td=td.replace("\n","+")   
-               aufgaben[x][y]=td       
+        for i in data: 
+            aufgaben[x][0]=data[str(i)]['name']
+            aufgaben[x][1]=data[str(i)]['average_credits']
+            aufgaben[x][2]=data[str(i)]['requirements']
+            x+=1
         print(datetime.now().strftime("%H:%M:%S"),"  ",reihen,"verschiedene Aufgaben gefunden! --> Speichere in",aufgaben_file) 
         with open(aufgaben_file, 'wb') as fp:
             pickle.dump(aufgaben, fp)
@@ -233,10 +224,6 @@ def call_cars(driver):
         except: 
             print(datetime.now().strftime("%H:%M:%S"),"  ","except")
            # global driver
-            if (browser_used=="chrome"):
-                driver=webdriver.Chrome()
-            else:
-                driver=webdriver.Firefox()
             driver.get(url)
             table = driver.find_elements_by_tag_name('table')
         x=-2
@@ -278,10 +265,10 @@ def login(driver):
     inhalt = str(driver.page_source)
     if ("Du bist bereits angemeldet." in inhalt):
         return
-    username = driver.find_element_by_id("user_email")
-    password = driver.find_element_by_id("user_password")
-    username.send_keys("kalki2@web.de")
-    password.send_keys("LogiTech")
+    usernamefield = driver.find_element_by_id("user_email")
+    passwordfield = driver.find_element_by_id("user_password")
+    usernamefield.send_keys(username)
+    passwordfield.send_keys(password)
     driver.find_element_by_name("commit").click()
 def call_cur_missions(driver):
     #3 Aktuelle Missionen abrufen   
@@ -390,7 +377,7 @@ def alarmieren(driver):
         if (row+1==len(aufgaben)):
            print(missions[i],"- Credits: unbekannt")
         else:         
-           print(missions[i],",",aufgaben[row][2])
+           print(missions[i],"( Ø",aufgaben[row][1],"Credits )")
         try:
             vorort=1
             find= driver.find_element_by_id('mission_vehicle_at_mission')         
@@ -612,26 +599,26 @@ def alarmieren(driver):
         if (row+1==len(aufgaben)):
            print(missions[i],"...Skippe Verbandsmission, unbekannte Aufgabe")   
         else:   
-           credits=aufgaben[row][2]
+           credits=aufgaben[row][1]
            #print(datetime.now().strftime("%H:%M:%S"),"  ","credits:",credits)
-           try: 
-                credits=credits.replace(".","")
-           except:
-                credits=credits
-           try: 
-                credits=credits.replace("ca","")
-           except:
-                credits=credits
-           if ("Ø" in credits):
-                start=credits.find("Ø")
-                credits=credits[start+1:]
-           if ("Credits" in credits):
-                start=credits.find("Credits")
-                credits=credits[:start]  
+          # try: 
+          #      credits=credits.replace(".","")
+          # except:
+          #      credits=credits
+          # try: 
+           #     credits=credits.replace("ca","")
+           #except:
+           #     credits=credits
+           #if ("Ø" in credits):
+           #     start=credits.find("Ø")
+           #     credits=credits[start+1:]
+           #if ("Credits" in credits):
+           #     start=credits.find("Credits")
+           #     credits=credits[:start]  
                 
-           if ("-" in credits):
-                start=credits.find("-")
-                credits=credits[start+2:]  
+          # if ("-" in credits):
+          #      start=credits.find("-")
+          #      credits=credits[start+2:]  
            #print(datetime.now().strftime("%H:%M:%S"),"  ","neue credits:",credits)       
            try:
                 credits=int(credits)
@@ -644,7 +631,7 @@ def alarmieren(driver):
                 time.sleep(3)
                 source=str(driver.page_source)
                 if ("Rückalarmieren" in source):
-                     print(missions[i],"...Skippe Verbandsmission (",credits,"). Bereits Fahrzeug(e) vor Ort.")
+                     print(missions[i],"...Skippe Verbandsmission ( Ø",aufgaben[row][1],"Credits ). Bereits Fahrzeug(e) vor Ort.")
                 else:
                     if ("Beginn in:" in source):
                         start=source.find("missionCountdown(")            
@@ -654,7 +641,7 @@ def alarmieren(driver):
                         if (restzeit>15):
                             print(missions[i],"...Skippe Mission, Beginn erst in",round(restzeit),"Minuten")
                             continue
-                    print(missions[i],"(",aufgaben[row][2],")")         
+                    print(missions[i],"( Ø",aufgaben[row][1],"Credits )")         
                     print(datetime.now().strftime("%H:%M:%S"),"  ",printtstart,"Schicke 1 LF zur Verbandsmission")   
                     try:        
                         driver.find_element_by_xpath('//*[@title="1 LF"]').click()                
@@ -671,7 +658,7 @@ def alarmieren(driver):
                     except:
                         alertt(driver)
            else:           
-                print(missions[i],"...Skippe Verbandsmission (",credits,"ist unter Creditgrenze von",str(creditgrenze),")")
+                print(missions[i],"...Skippe Verbandsmission, Ø",aufgaben[row][1],"Credits ist unter Creditgrenze von",str(creditgrenze),")")
         
 def globaling(hidden):
     if (hidden=="ja"):
@@ -775,4 +762,3 @@ if (auswahl=="1"):
 
 
 print(datetime.now().strftime("%H:%M:%S"),"  ",auswahl,"ist keine gültige Möglichkeit. Beende...")
-
