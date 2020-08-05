@@ -119,7 +119,7 @@ def get_credits(driver,zeitraum):
         driver.get(url)     
         inhalt = str(driver.page_source)
         if ("Bisher besteht noch kein Eintrag." in inhalt):
-        	return "Fehler, zu wenig Einträge vorhanden! Zeitraum (aktuell: ",zeitraum,"Tage) verkleinern?"   
+        	return "Fehler, zu wenig Einträge vorhanden! Zeitraum aktuell:",zeitraum,"Tage."   
         table = driver.find_elements_by_tag_name('table')          
         for tables in table:         
           for row in tables.find_elements_by_xpath(".//tr"):
@@ -723,10 +723,16 @@ if (auswahl=="3"):
     browser=globaling(hidden)        
     login(browser)
     credit=get_credits(browser,creds_zeitraum)
-    if ("Fehler" in credit):
-        print(datetime.now().strftime("%H:%M:%S"),"  ",credit)
-    else:
-       credit_calc(credit,creds_zeitraum)  
+    credit=str(credit)
+    try:
+    
+    	credit=int(credit)
+    	credit_calc(credit,creds_zeitraum)  
+    except:	
+   # if ("Fehler" in credit):
+        print(datetime.now().strftime("%H:%M:%S"),"  ",credit.replace("'","").replace(",","").replace("(","").replace(")",""))
+    #else:
+    #   credit_calc(credit,creds_zeitraum)  
     browser.quit() 
     quit()
     
