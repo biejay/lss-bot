@@ -26,7 +26,7 @@ pip install selenium
 * CMD öffnen, in diesen Ordner wechseln (cd ordner/unterordner)
 
 ```
-cd Downloads
+cd Downloads\lss-bot-files
 python leitstellenspiel.py
 ```
 
