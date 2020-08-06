@@ -129,7 +129,10 @@ def get_credits(driver,zeitraum):
                 y=y+1
                 td=td.text  
                 if (y==0):
-                    td=td.replace(".","")
+                    td=td.replace(".","")                   
+                    if (int(td)<0):                     
+                        td=0
+                       
                 credit[x][y]=td
                 if (y==2):
                     datetime_str = str(credit[x][y])                    
@@ -738,12 +741,13 @@ if (auswahl=="3"):
     browser=globaling(hidden)        
     login(browser)
     credit=get_credits(browser,creds_zeitraum)
-    credit=str(credit)
-    try:
     
-    	credit=int(credit)
+    try:    
+    	#credit=int(credit)
     	credit_calc(credit,creds_zeitraum)  
     except:	
+        credit=str(credit)
+        print("Fehler..")
    # if ("Fehler" in credit):
         print(datetime.now().strftime("%H:%M:%S"),"  ",credit.replace("'","").replace(",","").replace("(","").replace(")",""))
     #else:
