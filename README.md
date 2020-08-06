@@ -9,8 +9,9 @@ https://github.com/mozilla/geckodriver/releases
 https://chromedriver.chromium.org/downloads
 
 2.
-* Python3.8 Download + Installation (Achtung, Haken setzen!): 
+* Python3.8 Download + Installation (Achtung, Haken setzen siehe Bild!): 
 https://www.python.org/downloads/release/python-385/
+
 ![Image of Python Installation](https://github.com/biejay/lss-bot/blob/master/haken%20python.JPG)
 
 3.
