@@ -96,7 +96,7 @@ def personal_einstellen(driver):
         print(datetime.now().strftime("%H:%M:%S"),"  ",i['caption'],(30-len(i['caption']))*" ","(",angestellte,") : ",end="")
         if ("Die Einstellungsphase läuft noch" in inhalt):
             start=inhalt.find("Die Einstellungsphase läuft noch")
-            print(datetime.now().strftime("%H:%M:%S"),"  ",inhalt[start:start+40])
+            print(inhalt[start:start+40])
             continue
         driver.get("https://www.leitstellenspiel.de//buildings/"+str(i['id'])+"/hire_do/3")
         time.sleep(2)
@@ -344,6 +344,7 @@ def alertt(driver):
      except TimeoutException:
         return    
 def alarmieren(driver,speedmode):
+    global printtstart
     if (speedmode=="ja"):
         print(datetime.now().strftime("%H:%M:%S"),"  ","Speedmode aktiv")
         time_min=0
@@ -701,7 +702,7 @@ def get_status(driverc):
     
 fahrzeuge_abk=["Löschfahrzeug","LF","Drehleiter","DLK","Rüstwagen","RW","ELW 1","ELW 1", "Einsatzleitwagen 2","ELW 2","GW-Öl","GW-ÖL"]    
 fahrzeuge_an=[0]*len(fahrzeuge_abk)
-printtstart="       "
+
 
 settings()
 
