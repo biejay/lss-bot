@@ -1,4 +1,9 @@
 # lss-bot
+
+0.
+* Alarm-und Ausrückeordnung importieren:
+* leitstellenspiel - > anmelden > folgenden Link öffnen:
+https://www.leitstellenspiel.de/aao_exports/20189/import/523a3ab1326ff5a4ae01ab9055e47836
 1.
 * Firefox Driver Download:
 https://github.com/mozilla/geckodriver/releases
