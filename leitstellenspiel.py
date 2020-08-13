@@ -366,10 +366,38 @@ def alertt(driver):
         alert = driver.switch_to.alert    
         print(printtstart,alert.text)
         print(type(alert.text))
-        temptext=alert.text  
+        text=alert.text  
         alert.accept()    
-        auslastung(temptext)        
-       # print(datetime.now().strftime("%H:%M:%S"),"  ",printtstart,"Fahrzeug nicht verfügbar")
+        #auslastung(temptext)   
+        if ("fehl" in text):
+                text=text.replace(".","")
+                text=text[text.find(":")+2:]
+                auslastung_file="lss_auslastung.lss"
+                #print(text)
+                if (path.exists(auslastung_file)):
+                    with open (auslastung_file, 'rb') as fp:
+                        auslastung = pickle.load(fp)  
+                    print(datetime.now().strftime("%H:%M:%S"),"  ","Datei:",auslastung_file,"gefunden, lese Auslastung ein...")
+                    print(datetime.now().strftime("%H:%M:%S"),"  ",len(auslastung),"verschiedene Fahrzeugauslastungen gefunden!") 
+                    for i in range(0,len(auslastung)):
+                        if (text==auslastung[i][0]):
+                            print(datetime.now().strftime("%H:%M:%S"),"  ","'",text,"' gefunden - bisherige Auslastung:",auslastung[i][1])
+                            auslastung[i][1]+=1
+                            break    
+                    if (len(auslastung)-1==i) and (text!= auslastung[i][0]):
+                        print(datetime.now().strftime("%H:%M:%S"),"  ","Neuer Eintrag:","'",text,"'")
+                        auslastung.append([text,1])         
+                else: 
+                    w, h = 2, 1  #6 Items in x 'reihen' Reihen       
+                    auslastung = [[0 for x in range(w)] for y in range(h)]         
+                    auslastung[0][0]=text
+                    auslastung[0][1]=1
+                print(datetime.now().strftime("%H:%M:%S"),"  ","Schreibe nach",auslastung_file,"...")    
+                with open(auslastung_file, 'wb') as fp:
+                    pickle.dump(auslastung, fp)
+        else:
+            print(datetime.now().strftime("%H:%M:%S"),"  ","Anderes Alert:",text)        
+           # print(datetime.now().strftime("%H:%M:%S"),"  ",printtstart,"Fahrzeug nicht verfügbar")
      except TimeoutException:
         return    
 def auslastung(text):   
