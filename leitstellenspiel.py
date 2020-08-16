@@ -365,7 +365,7 @@ def alertt(driver):
                                        'confirmation popup to appear.')
         alert = driver.switch_to.alert    
         print(printtstart,alert.text)
-        print(type(alert.text))
+        #print(type(alert.text))
         text=alert.text  
         alert.accept()    
         #auslastung(temptext)   
@@ -556,16 +556,40 @@ def alarmieren(driver,speedmode):
         if ("Zusätzlich benötigte Fahrzeuge:" in str(driver.page_source)):
             additional=1
             source=str(driver.page_source)
-            start=source.find("Zusätzlich benötigte Fahrzeuge:")        
-            end=source[start:].find(".")          
-            needed=source[start+31:start+end]            
-            if (source[start+end-1:start+end+8]=="l. Wasser"):
-                 start=source.find("Zusätzlich benötigte Fahrzeuge:")                
-                 end=source[start+42:].find(".")  
-                 needed=source[start+47:start+42+end]
-                 needed=needed[needed.find(",")+1:]
-                 print(printtstart,"Mehr Wasser benötigt und außerdem:",needed)  
-               
+            start=source.find("Zusätzlich benötigte Fahrzeuge:")   
+            if ("l. Wasser" in source):    
+               # print("Wasser drin")
+                end=source[start+43:].find(".")
+                start2=source[start:].find("l. Wasser")
+                if (end==-1):
+                    end=len(source)
+                needed=source[start2+10:start+43+end]  
+                #print("need now:",needed)
+            else:
+                end=source[start+31:].find(".")
+                #print("end:",end)
+                if (end==-1):
+                    end=len(source)
+                needed=source[start+31:start+31+end]  
+            #print("source begin:",source[start+43:])
+            #print("end:",str(end))
+          
+            #print ("beginn:",needed)
+            if ("(" in needed):
+                       # temp=needed
+                        for xzy in range(0,200):
+                            if ("(" not in needed):
+                                    break
+                           # print(needed)  
+                            temp1=needed[:needed.find("(")-1]
+                            temp2=needed[needed.find(")")+1:]
+                            needed=temp1+temp2  
+           # print("needed:",needed)               
+            if (needed.find("l. Wasser")!=-1):
+                 start=needed.find("l. Wasser")                
+                 needed=needed[start+10:]
+                 #needed=needed[needed.find(",")+1:]
+                 print(printtstart,"Mehr Wasser benötigt und außerdem:",needed)                
                  if (lf_an==0 and ankommend==0):   
                      print(printtstart,"Schicke 1 LF als Wasserversorger")
                      driver.find_element_by_xpath('//*[@title="1 LF"]').click()      
@@ -577,14 +601,7 @@ def alarmieren(driver,speedmode):
             #print(datetime.now().strftime("%H:%M:%S"),"  ",needed)   
             if (ankommend==0):
               #  print(datetime.now().strftime("%H:%M:%S"),"  ",needed)
-                if ("(" in needed):
-                    temp=needed
-                    for xzy in range(0,200):
-                        if ("(" not in needed):
-                                break
-                        #print(needed)                       
-                        needed=needed[:needed.find("(")-1]+needed[needed.find(")")+1:]
-                       # print(needed)
+       
                  #   temp=needed.split(")")
                  #   needed=""
                  #   for j in temp:
@@ -600,6 +617,7 @@ def alarmieren(driver,speedmode):
                    # print(datetime.now().strftime("%H:%M:%S"),"  ",needed)    
                   
                 if ("," in needed):
+               #     print("Komma:",needed)
                     needed=needed.split(",")                
                     for auto in needed:
                       # print(datetime.now().strftime("%H:%M:%S"),"  ",auto)
@@ -815,12 +833,12 @@ auslastung_file="lss_auslastung.lss"
 if (path.exists(auslastung_file)):
         with open (auslastung_file, 'rb') as fp:
             auslastung = pickle.load(fp)  
-        print(datetime.now().strftime("%H:%M:%S"),"  ","Datei:",auslastung_file,"gefunden, lese Auslastung ein...")
-        print(datetime.now().strftime("%H:%M:%S"),"  ",len(auslastung),"verschiedene Fahrzeugauslastungen gefunden!") 
+        print("Datei:",auslastung_file,"gefunden, lese Auslastung ein...")
+        print(len(auslastung),"verschiedene Fahrzeugauslastungen gefunden!") 
         for i in range(0,len(auslastung)):           
-            print(datetime.now().strftime("%H:%M:%S"),"  ",auslastung[i][0]," fehlte:",auslastung[i][1],"Mal")            
+            print(auslastung[i][0]," fehlte:",auslastung[i][1],"Mal")            
 else:
-    print(datetime.now().strftime("%H:%M:%S"),"  ","Bisher keine Auslastungen gespeichert!")
+    print("Bisher keine Auslastungen gespeichert!")
 
 hidden=input("Browser versteckt starten? (ja/nein) [Standard=ja]: ") 
 speedmode=input("Speedmode? (nicht empfohlen!) (ja/nein) [Standard=nein]: ") 
