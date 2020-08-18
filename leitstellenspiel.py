@@ -454,15 +454,25 @@ def alarmieren(driver,speedmode):
       additional=0
       if (mission_alliance[i]==0): 
         url="https://www.leitstellenspiel.de/missions/"+mission_id[i]
-        driver.get(url)
+        try:
+            driver.get(url)
+        except:
+            print(datetime.now().strftime("%H:%M:%S"),"  ","Fehler beim Aufrufen der URL! Warte 2 Minuten...")
+            time.sleep(60*2)
+            return()
         time.sleep(2)
         row=-1
         for r in aufgaben:
                  row=row+1   
                  if (str(r[0]) in missions[i]):
-                     break      
-        source=str(driver.page_source)
-        if ("Der Einsatz wurde erfolgreich abgeschlossen." in str(driver.page_source)):
+                     break    
+        try:                        
+            source=str(driver.page_source)
+        except:
+            print(datetime.now().strftime("%H:%M:%S"),"  ","Fehler beim Aufrufen des Quelltextes! Warte 2 Minuten...")
+            time.sleep(60*2)
+            return()    
+        if ("Der Einsatz wurde erfolgreich abgeschlossen." in source):
             print(missions[i])
             print(printtstart,"...Skippe abgeschlossenen Einsatz")
             continue
@@ -539,7 +549,7 @@ def alarmieren(driver,speedmode):
         except:
             print(printtstart,"Keine Fahrzeuge auf Anfahrt")
             ankommend=0
-        if ("Wir benötigen noch min." not in str(driver.page_source) and "Zusätzlich benötigte Fahrzeuge:" not in str(driver.page_source) and "missionCountdown(" in source and vorort==1 or "Wir benötigen noch min." not in str(driver.page_source) and "Zusätzlich benötigte Fahrzeuge:" not in str(driver.page_source) and ankommend==1 and "missionCountdown(" in source):
+        if ("Wir benötigen noch min." not in source and "Zusätzlich benötigte Fahrzeuge:" not in source and "missionCountdown(" in source and vorort==1 or "Wir benötigen noch min." not in source and "Zusätzlich benötigte Fahrzeuge:" not in source and ankommend==1 and "missionCountdown(" in source):
             start=source.find("missionCountdown(")
             #restzeit=source[start+17:]
             end=source[start:].find(",")
@@ -552,42 +562,61 @@ def alarmieren(driver,speedmode):
                  row=row+1   
                  if (str(r[0]) in missions[i]):
                      break    
-                    
-        if ("Zusätzlich benötigte Fahrzeuge:" in str(driver.page_source)):
-            additional=1
-            source=str(driver.page_source)
+        if ("Gefangene sollen abtransportiert werden." in source):
+            elems = driver.find_elements_by_xpath("//a[@href]")
+            for elem in elems:
+                temp=str(elem.get_attribute("href"))   
+                if "/gefangener/" in temp and "Zellen: 0" not in elem.text:      
+                        break
+            print(printtstart,"Schicke Gefangenen nach:",elem.text)
+            driver.get(temp)
+            time.sleep(2)
+            try:
+                temp=browser.find_element_by_xpath("//div[contains(@class, 'alert alert-success')]")
+                temp=temp.text.split("\n")
+                print(printtstart,temp[0])
+            except:
+                print(printtstart,"Fehler!!!!!!!!!!!")
+            return
+        if ("Zusätzlich benötigte Fahrzeuge:" in source):
+            additional=1           
             start=source.find("Zusätzlich benötigte Fahrzeuge:")   
             if ("l. Wasser" in source):    
                # print("Wasser drin")
-                end=source[start+43:].find(".")
+                end=source[start+43:].find(".")               
                 start2=source[start:].find("l. Wasser")
+                brauchewasser=1
                 if (end==-1):
                     end=len(source)
-                needed=source[start2+10:start+43+end]  
+                #print(start+start2+10)
+                #print(start+43+end)    
+                needed=source[start+start2+10:start+43+end]                  
                 #print("need now:",needed)
             else:
                 end=source[start+31:].find(".")
                 #print("end:",end)
+                brauchewasser=0
                 if (end==-1):
                     end=len(source)
                 needed=source[start+31:start+31+end]  
             #print("source begin:",source[start+43:])
-            #print("end:",str(end))
-          
+            #print("end:",str(end))          
             #print ("beginn:",needed)
             if ("(" in needed):
+                      #  print("beginn der schlefie:",needed)
                        # temp=needed
                         for xzy in range(0,200):
                             if ("(" not in needed):
                                     break
-                           # print(needed)  
+                         #   print(needed)  
                             temp1=needed[:needed.find("(")-1]
                             temp2=needed[needed.find(")")+1:]
                             needed=temp1+temp2  
            # print("needed:",needed)               
-            if (needed.find("l. Wasser")!=-1):
-                 start=needed.find("l. Wasser")                
-                 needed=needed[start+10:]
+            if (brauchewasser==1):
+                 start=needed.find("l. Wasser")  
+                 if start >-1:
+                    needed=needed[start+10:]
                  #needed=needed[needed.find(",")+1:]
                  print(printtstart,"Mehr Wasser benötigt und außerdem:",needed)                
                  if (lf_an==0 and ankommend==0):   
@@ -627,13 +656,15 @@ def alarmieren(driver,speedmode):
                         # print(datetime.now().strftime("%H:%M:%S"),"  ","call:",call)
                          driver.find_element_by_xpath(call).click()                       
                          alertt(driver)                
-                else:
+                elif (len(needed)>3):
                     #print ("Auto:",needed[3:],"-1 Mal rufen")
                     for h in range(0,int(needed[1:2])):                       
                          call='//*[@title="1 '+needed[3:]+'"]'   
                        #  print(datetime.now().strftime("%H:%M:%S"),"  ","call:",call)
                          driver.find_element_by_xpath(call).click()                       
                          alertt(driver)
+                else:
+                     print(printtstart,"Nichts weiter benötigt.")
             else:
                 print(printtstart,"Es sind bereits Fahrzeuge auf Anfahrt, warte ab und schicke keine weiteren.")
                 #continue
@@ -671,7 +702,7 @@ def alarmieren(driver,speedmode):
           #            call='//*[@title="1 '+fahrzeuge_abk[fahrzeuge_abk.index(auto)+1]+'"]'                      
           #            driver.find_element_by_xpath(call).click()                       
           #            alertt(driver)
-            if ("Wir benötigen noch min." in str(driver.page_source) and lf_an==0 and ankommend==0):
+            if ("Wir benötigen noch min." in source and lf_an==0 and ankommend==0):
                 additional=1 
                 print(printtstart,"Schicke 1 LF als Mannschaftsverstärkung")               
                 driver.find_element_by_xpath('//*[@title="1 LF"]').click()                
@@ -733,9 +764,13 @@ def alarmieren(driver,speedmode):
             #if (additional == 1):
             #     print ("Benötigte Verstärkung geschickt:", lf_need,"LF,", elw_need,"ELW,",dlk_need,"DLK,",rw_need,"RW zu Mission",missions[i],"geschickt!")
             time.sleep(1)
+            temp=driver.find_element_by_xpath("//div[contains(@class, 'alert fade in alert-danger ')]")
+            temp=temp.text.split("\n")           
+            print(printtstart,temp[1])
             temp=driver.find_element_by_xpath("//div[contains(@class, 'alert fade in alert-success ')]")
             temp=temp.text.split("\n")           
             print(printtstart,temp[1])
+ 
             time.sleep(random.randint(time_min,time_max))
         except:
             alertt(driver)
@@ -758,9 +793,19 @@ def alarmieren(driver,speedmode):
                 continue
            if (credits+1>creditgrenze):
                 url="https://www.leitstellenspiel.de/missions/"+mission_id[i]
-                driver.get(url)
+                try:
+                    driver.get(url)
+                except:
+                    print(datetime.now().strftime("%H:%M:%S"),"  ","Fehler beim Aufrufen der URL! Warte 2 Minuten...")
+                    time.sleep(60*2)
+                    return()
                 time.sleep(2)
-                source=str(driver.page_source)
+                try:
+                    source=str(driver.page_source)
+                except:
+                    print(datetime.now().strftime("%H:%M:%S"),"  ","Fehler beim Aufrufen des Quelltextes! Warte 2 Minuten...")
+                    time.sleep(60*2)
+                    return()    
                 if ("Rückalarmieren" in source):
                      print(missions[i],"( Dauer:",aufgaben[row][3],")")
                      print(printtstart,"...Skippe Verbandsmission ( Ø",aufgaben[row][1],"Credits ). Bereits Fahrzeug(e) vor Ort.")
