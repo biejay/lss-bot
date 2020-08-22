@@ -294,7 +294,12 @@ def call_cur_missions(driver):
     global current_creds
     global startcreds
     global startzeit    
-    driver.get("https://www.leitstellenspiel.de/")
+    try:
+        driver.get("https://www.leitstellenspiel.de/")
+    except:
+            print(datetime.now().strftime("%H:%M:%S"),"  ","Fehler beim Aufrufen der Missionen! Warte 2 Minuten...")
+            time.sleep(60*2)
+            return()
     time.sleep(2)
     inhalt = str(driver.page_source)
     try:   
@@ -377,22 +382,22 @@ def alertt(driver):
                 if (path.exists(auslastung_file)):
                     with open (auslastung_file, 'rb') as fp:
                         auslastung = pickle.load(fp)  
-                    print(datetime.now().strftime("%H:%M:%S"),"  ","Datei:",auslastung_file,"gefunden, lese Auslastung ein...")
-                    print(datetime.now().strftime("%H:%M:%S"),"  ",len(auslastung),"verschiedene Fahrzeugauslastungen gefunden!") 
+                    #print(datetime.now().strftime("%H:%M:%S"),"  ","Datei:",auslastung_file,"gefunden, lese Auslastung ein...")
+                   # print(datetime.now().strftime("%H:%M:%S"),"  ",len(auslastung),"verschiedene Fahrzeugauslastungen gefunden!") 
                     for i in range(0,len(auslastung)):
                         if (text==auslastung[i][0]):
-                            print(datetime.now().strftime("%H:%M:%S"),"  ","'",text,"' gefunden - bisherige Auslastung:",auslastung[i][1])
+                            print(printtstart,"Bereits",auslastung[i][1],"Mal gefehlt")
                             auslastung[i][1]+=1
                             break    
                     if (len(auslastung)-1==i) and (text!= auslastung[i][0]):
-                        print(datetime.now().strftime("%H:%M:%S"),"  ","Neuer Eintrag:","'",text,"'")
+                        print(printtstart,"Neuer Eintrag:","'",text,"'")
                         auslastung.append([text,1])         
                 else: 
                     w, h = 2, 1  #6 Items in x 'reihen' Reihen       
                     auslastung = [[0 for x in range(w)] for y in range(h)]         
                     auslastung[0][0]=text
                     auslastung[0][1]=1
-                print(datetime.now().strftime("%H:%M:%S"),"  ","Schreibe nach",auslastung_file,"...")    
+               # print(datetime.now().strftime("%H:%M:%S"),"  ","Schreibe nach",auslastung_file,"...")    
                 with open(auslastung_file, 'wb') as fp:
                     pickle.dump(auslastung, fp)
         else:
